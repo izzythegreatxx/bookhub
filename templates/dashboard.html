@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BookHub – Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+<h1>Your Books</h1>
+<div id="books"></div>
+
+<h2>Add Book</h2>
+<input id="title" placeholder="Title">
+<input id="author" placeholder="Author">
+<input id="year" placeholder="Year" type="number">
+<select id="status">
+    <option value="want_to_read">Want to Read</option>
+    <option value="reading">Reading</option>
+    <option value="read">Read</option>
+</select>
+<button onclick="addBook()">Add</button>
+
+<hr>
+
+<h2>Shelves</h2>
+<div id="shelves"></div>
+
+<button onclick="logout()">Logout</button>
+
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

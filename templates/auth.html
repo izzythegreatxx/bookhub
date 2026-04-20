@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BookHub – Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+<h1>BookHub</h1>
+
+<h2>Register</h2>
+<input id="regEmail" placeholder="Email">
+<input id="regPassword" placeholder="Password" type="password">
+<button onclick="register()">Register</button>
+
+<hr>
+
+<h2>Login</h2>
+<input id="email" placeholder="Email">
+<input id="password" placeholder="Password" type="password">
+<button onclick="login()">Login</button>
+
+<script src="{{ url_for('static', filename='auth.js') }}"></script>
+</body>
+</html>

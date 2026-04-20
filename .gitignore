@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+
+# Environment variables
+.env
+
+# SQLite database
+books.db
+
+# Secrets (DO NOT COMMIT)
+secret_key.txt
