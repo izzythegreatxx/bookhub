@@ -1,19 +1,37 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Shelf, ShelfBook, Book
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from models import Book, Shelf, ShelfBook, db
+from schemas import ShelfSchema
+
+shelf_schema = ShelfSchema()
 shelves_bp = Blueprint("shelves", __name__)
+
+
+def get_json_payload():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None
+    return data
 
 
 @shelves_bp.post("/shelves")
 @jwt_required()
 def create_shelf():
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    name = data.get("name")
+    user_id = int(get_jwt_identity())
+    data = get_json_payload()
+    if data is None:
+        return jsonify({"message": "Request body must be valid JSON"}), 400
 
-    if not name:
-        return jsonify({"message": "Shelf name is required"}), 400
+    errors = shelf_schema.validate(data)
+    if errors:
+        return jsonify(errors), 400
+
+    name = data["name"].strip()
+
+    existing = Shelf.query.filter_by(user_id=user_id, name=name).first()
+    if existing:
+        return jsonify({"message": "Shelf already exists"}), 409
 
     shelf = Shelf(name=name, user_id=user_id)
     db.session.add(shelf)
@@ -21,25 +39,63 @@ def create_shelf():
 
     return jsonify({"id": shelf.id, "name": shelf.name}), 201
 
-@shelves_bp.post("/shelves/<int:shelf_id>/books/<int:book_id>")
-@jwt_required
-def add_book_to_shelf(shelf_id, book_id):
-    user_id = get_jwt_identity()
 
-    # ensure shelf belongs to user
+@shelves_bp.get("/shelves")
+@jwt_required()
+def get_shelves():
+    user_id = int(get_jwt_identity())
+    shelves = Shelf.query.filter_by(user_id=user_id).order_by(Shelf.name.asc()).all()
+
+    return jsonify(
+        [{"id": shelf.id, "name": shelf.name} for shelf in shelves]
+    ), 200
+
+
+@shelves_bp.get("/shelves/<int:shelf_id>")
+@jwt_required()
+def get_shelf_books(shelf_id):
+    user_id = int(get_jwt_identity())
+    shelf = Shelf.query.filter_by(id=shelf_id, user_id=user_id).first()
+
+    if not shelf:
+        return jsonify({"error": "Shelf not found"}), 404
+
+    books = [link.book for link in shelf.shelf_books if link.book.user_id == user_id]
+
+    return jsonify(
+        [
+            {
+                "id": book.id,
+                "title": book.title,
+                "author": book.author,
+                "year": book.year,
+                "status": book.status,
+                "rating": book.rating,
+                "review": book.review,
+                "pages_total": book.pages_total,
+                "pages_read": book.pages_read,
+            }
+            for book in books
+        ]
+    ), 200
+
+
+@shelves_bp.post("/shelves/<int:shelf_id>/books/<int:book_id>")
+@jwt_required()
+def add_book_to_shelf(shelf_id, book_id):
+    user_id = int(get_jwt_identity())
+
     shelf = Shelf.query.filter_by(id=shelf_id, user_id=user_id).first()
     if not shelf:
         return jsonify({"error": "Shelf not found"}), 404
 
-    # ensure book belongs to user
     book = Book.query.filter_by(id=book_id, user_id=user_id).first()
     if not book:
         return jsonify({"error": "Book not found"}), 404
 
-    # prevent duplicates
     existing = ShelfBook.query.filter_by(shelf_id=shelf_id, book_id=book_id).first()
     if existing:
-        return jsonify({"message": "Book already in shelf"}), 200
+        return jsonify({"message": "Book already in shelf"}), 409
 
     shelf_book = ShelfBook(shelf_id=shelf_id, book_id=book_id)
     db.session.add(shelf_book)
@@ -51,11 +107,15 @@ def add_book_to_shelf(shelf_id, book_id):
 @shelves_bp.delete("/shelves/<int:shelf_id>/books/<int:book_id>")
 @jwt_required()
 def remove_book_from_shelf(shelf_id, book_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     shelf = Shelf.query.filter_by(id=shelf_id, user_id=user_id).first()
     if not shelf:
         return jsonify({"error": "Shelf not found"}), 404
+
+    book = Book.query.filter_by(id=book_id, user_id=user_id).first()
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
 
     shelf_book = ShelfBook.query.filter_by(shelf_id=shelf_id, book_id=book_id).first()
     if not shelf_book:
@@ -63,51 +123,4 @@ def remove_book_from_shelf(shelf_id, book_id):
 
     db.session.delete(shelf_book)
     db.session.commit()
-
-    return jsonify({"message": "Book removed from shelf"}), 200
-
-
-@shelves_bp.get("/shelves")
-@jwt_required()
-def get_shelves():
-    user_id = get_jwt_identity()
-    shelves = Shelf.query.filter_by(user_id=user_id).all()
-
-    return jsonify([
-        {"id": s.id, "name": s.name}
-        for s in shelves
-    ]), 200
-
-@shelves_bp.get("/shelves/<int:shelf_id>")
-@jwt_required()
-def get_shelf_books(shelf_id):
-    user_id = get_jwt_identity()
-    shelf = Shelf.query.filter_by(id=shelf_id, user_id=user_id).first()
-    if not shelf:
-        return jsonify({"error": "Shelf not found"}), 404
-
-    shelf_books = ShelfBook.query.filter_by(shelf_id=shelf_id).all()
-    book_ids = [sb.book_id for sb in shelf_books]
-
-    books = Book.query.filter(Book.id.in_(book_ids)).all()
-
-    return jsonify([
-        {
-            "id": b.id,
-            "title": b.title,
-            "author": b.author,
-            "year": b.year,
-            "status": b.status,
-            "rating": b.rating,
-            "reveiew": b.review,
-            "pages_total": b.pages_total,
-            "pages_read": b.pages_read
-        }
-        for b in books
-    ]), 200
-
-
-
-
-
-
+    return "", 204
