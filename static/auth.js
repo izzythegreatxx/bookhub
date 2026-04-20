@@ -1,46 +1,90 @@
-let accessToken = null;
-let refreshToken = null;
+        const tabButtons = document.querySelectorAll(".tab-btn");
+        const loginForm = document.getElementById("login-form");
+        const registerForm = document.getElementById("register-form");
+        const authMessage = document.getElementById("auth-message");
 
-async function register() {
-    const res = await fetch("/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: document.getElementById("regEmail").value,
-            password: document.getElementById("regPassword").value
-        })
-    });
+        function showMessage(text, isError = false) {
+            authMessage.textContent = text;
+            authMessage.classList.remove("hidden", "error", "success");
+            authMessage.classList.add(isError ? "error" : "success");
+        }
 
-    const data = await res.json();
+        tabButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                tabButtons.forEach((btn) => btn.classList.remove("active"));
+                button.classList.add("active");
 
-    if (!res.ok) {
-        alert("Registration failed: " + JSON.stringify(data));
-        return;
-    }
+                if (button.dataset.tab === "login") {
+                    loginForm.classList.remove("hidden");
+                    loginForm.classList.add("active-form");
+                    registerForm.classList.add("hidden");
+                    registerForm.classList.remove("active-form");
+                } else {
+                    registerForm.classList.remove("hidden");
+                    registerForm.classList.add("active-form");
+                    loginForm.classList.add("hidden");
+                    loginForm.classList.remove("active-form");
+                }
 
-    alert("Registration successful. You can now log in.");
-}
+                authMessage.classList.add("hidden");
+            });
+        });
 
-async function login() {
-    const res = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: document.getElementById("email").value,
-            password: document.getElementById("password").value
-        })
-    });
+        document.getElementById("register-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
 
-    const data = await res.json();
+            const payload = {
+                email: document.getElementById("register-email").value.trim(),
+                password: document.getElementById("register-password").value
+            };
 
-    if (!res.ok) {
-        alert("Login failed: " + JSON.stringify(data));
-        return;
-    }
+            try {
+                const response = await fetch("/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
 
-    // Save tokens to localStorage so dashboard.js can use them
-    localStorage.setItem("accessToken", data.access_token);
-    localStorage.setItem("refreshToken", data.refresh_token);
+                const data = await response.json();
 
-    window.location.href = "/dashboard";
-}
+                if (!response.ok) {
+                    showMessage(data.message || "Registration failed.", true);
+                    return;
+                }
+
+                showMessage(data.message || "Registered successfully. Check your email.");
+                event.target.reset();
+            } catch {
+                showMessage("Something went wrong while registering.", true);
+            }
+        });
+
+        document.getElementById("login-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const payload = {
+                email: document.getElementById("login-email").value.trim(),
+                password: document.getElementById("login-password").value
+            };
+
+            try {
+                const response = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage(data.message || "Login failed.", true);
+                    return;
+                }
+
+                localStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                window.location.href = "/dashboard";
+            } catch {
+                showMessage("Something went wrong while logging in.", true);
+            }
+        });

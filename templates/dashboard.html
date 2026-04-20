@@ -1,32 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>BookHub – Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BookHub | Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 </head>
-
 <body>
+    <div class="dashboard-shell">
+        <aside class="sidebar card">
+            <div>
+                <div class="badge">BookHub</div>
+                <h2 class="sidebar-title">Your Shelf</h2>
+                <p class="muted">A focused place to manage your books.</p>
+            </div>
 
-<h1>Your Books</h1>
-<div id="books"></div>
+            <nav class="sidebar-nav">
+                <button class="nav-link active">Dashboard</button>
+                <button class="nav-link">Books</button>
+                <button class="nav-link">Shelves</button>
+                <button class="nav-link">Reviews</button>
+            </nav>
 
-<h2>Add Book</h2>
-<input id="title" placeholder="Title">
-<input id="author" placeholder="Author">
-<input id="year" placeholder="Year" type="number">
-<select id="status">
-    <option value="want_to_read">Want to Read</option>
-    <option value="reading">Reading</option>
-    <option value="read">Read</option>
-</select>
-<button onclick="addBook()">Add</button>
+            <button id="logout-btn" class="btn-secondary full-width">Logout</button>
+        </aside>
 
-<hr>
+        <main class="dashboard-main">
+            <header class="topbar card">
+                <div>
+                    <h1>Reading Dashboard</h1>
+                    <p class="muted">Track progress, organize shelves, and review what you read.</p>
+                </div>
+                <div class="topbar-actions">
+                    <input id="search-input" type="text" placeholder="Search books..." />
+                    <button class="btn-primary">Search</button>
+                </div>
+            </header>
 
-<h2>Shelves</h2>
-<div id="shelves"></div>
+            <section class="stats-grid">
+                <article class="stat-card card">
+                    <span class="stat-label">Total Books</span>
+                    <strong id="stat-total">0</strong>
+                </article>
+                <article class="stat-card card">
+                    <span class="stat-label">Currently Reading</span>
+                    <strong id="stat-reading">0</strong>
+                </article>
+                <article class="stat-card card">
+                    <span class="stat-label">Completed</span>
+                    <strong id="stat-read">0</strong>
+                </article>
+                <article class="stat-card card">
+                    <span class="stat-label">Want to Read</span>
+                    <strong id="stat-want">0</strong>
+                </article>
+            </section>
 
-<button onclick="logout()">Logout</button>
+            <section class="content-grid">
+                <section class="card panel">
+                    <div class="panel-header">
+                        <h2>Add Book</h2>
+                        <p class="muted">Create a new entry for your shelf.</p>
+                    </div>
+
+                    <form id="add-book-form" class="form-grid">
+                        <input name="title" type="text" placeholder="Title" required />
+                        <input name="author" type="text" placeholder="Author" required />
+                        <input name="year" type="number" placeholder="Year" required />
+                        <select name="status">
+                            <option value="want_to_read">Want to Read</option>
+                            <option value="currently_reading">Currently Reading</option>
+                            <option value="read">Read</option>
+                        </select>
+                        <input name="pages_total" type="number" placeholder="Total pages" />
+                        <input name="pages_read" type="number" placeholder="Pages read" />
+                        <input name="rating" type="number" min="1" max="5" placeholder="Rating (1-5)" />
+                        <textarea name="review" rows="4" placeholder="Write a short review"></textarea>
+                        <button type="submit" class="btn-primary">Add Book</button>
+                    </form>
+                </section>
+
+                <section class="card panel">
+                    <div class="panel-header">
+                        <h2>Your Shelves</h2>
+                        <p class="muted">Create and manage custom shelves.</p>
+                    </div>
+
+                    <form id="create-shelf-form" class="inline-form">
+                        <input name="name" type="text" placeholder="New shelf name" required />
+                        <button type="submit" class="btn-primary">Create</button>
+                    </form>
+
+                    <ul id="shelves-list" class="simple-list"></ul>
+                </section>
+            </section>
+            <section class="card panel">
+                <div class="panel-header panel-header-row">
+                    <div>
+                        <h2>Your Books</h2>
+                        <p class="muted">All books currently in your collection.</p>
+                    </div>
+                    <button id="show-all-books" class="btn-secondary">Show All Books</button>
+                </div>
+
+                <div id="books-list" class="book-grid"></div>
+            </section>
+
+        </main>
+    </div>
+
 
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 </body>
