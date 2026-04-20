@@ -1,14 +1,21 @@
+'''
+Book-related routes for adding, retrieving, and searching books in the user's collection.
+Includes helper functions for JSON payload handling and book data validation, as well as routes for updating and deleting books. 
+All routes require JWT authentication to ensure that users can only access and modify their own book data.
+'''
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from models import Book, db
 from schemas import BOOK_STATUSES, BookSchema
 
+# Blueprint for book-related routes
 book_schema = BookSchema()
 books_schema = BookSchema(many=True)
 books_bp = Blueprint("books", __name__)
 
-
+# Helper functions for JSON payload handling and book data validation
 def get_json_payload():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
@@ -27,20 +34,22 @@ def validate_book_payload(data, partial=False):
 
     return {}
 
-
+# Route for adding a new book to the user's collection
 @books_bp.post("/books")
 @jwt_required()
 def add_book():
     data = get_json_payload()
     if data is None:
         return jsonify({"message": "Request body must be valid JSON"}), 400
-
+    
+    # Validate the book data and return errors if validation fails
     errors = validate_book_payload(data, partial=False)
     if errors:
         return jsonify(errors), 400
-
+    # Get the user ID from the JWT token to associate the new book with the correct user
     user_id = int(get_jwt_identity())
 
+    # Create a new Book object with the provided data and associate it with the user
     new_book = Book(
         title=data["title"].strip(),
         author=data["author"].strip(),
@@ -52,13 +61,14 @@ def add_book():
         pages_total=data.get("pages_total"),
         pages_read=data.get("pages_read", 0),
     )
-
+    
+    # Add the new book to the database session and commit it to save the book in the database
     db.session.add(new_book)
     db.session.commit()
 
     return jsonify(book_schema.dump(new_book)), 201
 
-
+# Route for retrieving all books in the user's collection, ordered by most recently added
 @books_bp.get("/books")
 @jwt_required()
 def get_books():
@@ -66,7 +76,7 @@ def get_books():
     books = Book.query.filter_by(user_id=user_id).order_by(Book.id.desc()).all()
     return jsonify(books_schema.dump(books)), 200
 
-
+# Route for retrieving a specific book by its ID, ensuring it belongs to the authenticated user
 @books_bp.get("/books/<int:book_id>")
 @jwt_required()
 def get_book(book_id):
@@ -78,7 +88,7 @@ def get_book(book_id):
 
     return jsonify(book_schema.dump(book)), 200
 
-
+# Route for searching books in the user's collection based on various criteria and supporting pagination and sorting
 @books_bp.get("/books/search")
 @jwt_required()
 def search_books():
@@ -88,10 +98,12 @@ def search_books():
     title = request.args.get("title")
     year = request.args.get("year", type=int)
     status = request.args.get("status")
-
+    
+    # Sorting parameters with default values and validation to ensure only allowed fields are used for sorting
     sort_by = request.args.get("sort_by", "id")
     order = request.args.get("order", "desc")
-
+    
+    # Pagination parameters with default values and limits to prevent excessive data retrieval
     page = max(request.args.get("page", 1, type=int), 1)
     limit = min(max(request.args.get("limit", 10, type=int), 1), 100)
 
@@ -105,7 +117,8 @@ def search_books():
         query = query.filter(Book.year == year)
     if status in BOOK_STATUSES:
         query = query.filter(Book.status == status)
-
+        
+    # Validate sorting parameters and apply sorting to the query based on allowed fields
     allowed_sort_fields = {"id", "title", "author", "year", "rating", "status", "pages_read"}
     if sort_by in allowed_sort_fields:
         column = getattr(Book, sort_by)
@@ -125,11 +138,12 @@ def search_books():
         }
     ), 200
 
-
+# Route for updating an existing book's information, ensuring the book belongs to the authenticated user and validating the input data
 @books_bp.patch("/books/<int:book_id>")
 @jwt_required()
 def update_book(book_id):
     user_id = int(get_jwt_identity())
+    # Retrieve the book to be updated, ensuring it belongs to the authenticated user
     book = Book.query.filter_by(id=book_id, user_id=user_id).first()
 
     if not book:
@@ -138,7 +152,8 @@ def update_book(book_id):
     data = get_json_payload()
     if data is None:
         return jsonify({"message": "Request body must be valid JSON"}), 400
-
+    
+    # Validate the updated book data and return errors if validation fails (partial=True allows for partial updates)
     errors = validate_book_payload(data, partial=True)
     if errors:
         return jsonify(errors), 400
@@ -166,7 +181,7 @@ def update_book(book_id):
     db.session.commit()
     return jsonify(book_schema.dump(book)), 200
 
-
+# Route for deleting a book from the user's collection, ensuring the book belongs to the authenticated user before deletion
 @books_bp.delete("/books/<int:book_id>")
 @jwt_required()
 def delete_book(book_id):

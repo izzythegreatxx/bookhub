@@ -1,3 +1,9 @@
+'''
+Flask application factory for creating and configuring the Flask app
+Includes setup for JWT authentication, database initialization, email configuration, and route registration for authentication, book management, and shelf management
+'''
+
+
 import os
 
 from dotenv import load_dotenv
@@ -12,9 +18,11 @@ from routes.auth import auth_bp
 from routes.routes import books_bp
 from routes.shelves import shelves_bp
 
+# load environment variables from .env file
 load_dotenv()
 
 
+# Factory function to create and configure the Flask application
 def create_app() -> Flask:
     app = Flask(__name__)
 
@@ -33,18 +41,22 @@ def create_app() -> Flask:
     app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", app.config["MAIL_USERNAME"])
 
+# Initialize extensions
     db.init_app(app)
     jwt = JWTManager(app)
     mail.init_app(app)
-
+    
+    # Check if a JWT token is revoked (i.e., in the blocklist)
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
         return jwt_payload["jti"] in BLOCKLIST
-
+     
+    # Register blueprints for authentication, book management, and shelf management
     app.register_blueprint(auth_bp)
     app.register_blueprint(books_bp)
     app.register_blueprint(shelves_bp)
-
+    
+    # Define routes for the home page (authentication) and dashboard
     @app.get("/")
     def auth_page():
         return render_template("auth.html")
@@ -53,6 +65,7 @@ def create_app() -> Flask:
     def dashboard():
         return render_template("dashboard.html")
 
+    # Create database tables if they don't exist
     with app.app_context():
         db.create_all()
 

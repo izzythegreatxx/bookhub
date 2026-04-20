@@ -1,3 +1,6 @@
+'''Authentication routes for user registration, email verification, login, logout, and token refreshing using Flask, 
+   Flask-JWT-Extended, and Flask-Mail. Includes helper functions for token generation and email normalization.
+'''
 from flask import Blueprint, current_app, jsonify, render_template, request, url_for
 from flask_jwt_extended import (
     create_access_token,
@@ -13,9 +16,10 @@ from blocklist import BLOCKLIST
 from mail_config import mail
 from models import User, db
 
+# Blueprint for authentication routes
 auth_bp = Blueprint("auth", __name__)
 
-
+# Helper functions for token generation, email normalization, and JSON payload handling
 def get_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
 
@@ -41,7 +45,7 @@ def get_json_payload():
 def normalize_email(email: str) -> str:
     return email.strip().lower()
 
-
+# Route for user registration with email verification
 @auth_bp.post("/auth/register")
 def register():
     data = get_json_payload()
@@ -53,7 +57,8 @@ def register():
 
     if not email or not password:
         return jsonify({"message": "Email and password are required"}), 400
-
+    
+    # Check if the email is already registered
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Email already exists"}), 400
 
@@ -62,7 +67,8 @@ def register():
 
     db.session.add(user)
     db.session.commit()
-
+    
+    # Generate a verification token and send a verification email to the user
     token = generate_verification_token(email)
     verify_url = url_for("auth.verify_email", token=token, _external=True)
 
@@ -84,7 +90,7 @@ def register():
         {"message": "User created. Check your email to verify your account."}
     ), 201
 
-
+# Route for email verification when the user clicks the link in the verification email
 @auth_bp.get("/verify/<token>")
 def verify_email(token: str):
     email = confirm_verification_token(token)
@@ -101,7 +107,7 @@ def verify_email(token: str):
 
     return render_template("verified.html")
 
-
+# Route for user login that issues JWT access and refresh tokens
 @auth_bp.post("/auth/login")
 def login():
     data = get_json_payload()
@@ -120,7 +126,8 @@ def login():
 
     if not user.is_verified:
         return jsonify({"message": "Email not verified"}), 403
-
+    
+    # Generate JWT access and refresh tokens for the authenticated user
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
 
@@ -136,15 +143,16 @@ def login():
         }
     ), 200
 
-
+# Route for user logout that revokes the current JWT access token
 @auth_bp.post("/auth/logout")
 @jwt_required()
 def logout():
     jti = get_jwt()["jti"]
+    # Add the token's unique identifier (jti) to the blocklist to revoke it
     BLOCKLIST.add(jti)
     return jsonify({"message": "User logged out"}), 200
 
-
+# Route for user logout that revokes the current JWT refresh token
 @auth_bp.post("/auth/logout-refresh")
 @jwt_required(refresh=True)
 def logout_refresh():
@@ -152,7 +160,7 @@ def logout_refresh():
     BLOCKLIST.add(jti)
     return jsonify({"message": "Refresh token revoked"}), 200
 
-
+# Route for refreshing the JWT access token using a valid refresh token
 @auth_bp.post("/auth/refresh")
 @jwt_required(refresh=True)
 def refresh():

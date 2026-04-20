@@ -1,18 +1,22 @@
+'''Models for the Flask application, including User, Book, Tag, Shelf, and ShelfBook entities with appropriate relationships and constraints.'''
+
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
-
+# Association table for many-to-many relationship between books and tags
 book_tags = db.Table(
     "book_tags",
     db.Column("book_id", db.Integer, db.ForeignKey("book.id"), primary_key=True),
     db.Column("tag_id", db.Integer, db.ForeignKey("tag.id"), primary_key=True),
 )
 
-
+# Association table for many-to-many relationship between shelves and books
 class User(db.Model):
+    '''Model for User with fields for email, password hash, and verification status, along with relationships to books, shelves, and tags. Includes methods for setting and checking passwords.'''
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -28,8 +32,9 @@ class User(db.Model):
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
-
+# Models for Book, Tag, Shelf, and ShelfBook with appropriate constraints and relationships
 class Book(db.Model):
+    '''Model for Book with fields for title, author, year, status, rating, review, page counts, and relationships to user, tags, and shelves. Includes constraints to ensure data integrity and a method to convert the book object to a dictionary for JSON serialization.'''
     __table_args__ = (
         CheckConstraint("rating IS NULL OR (rating >= 1 AND rating <= 5)", name="check_rating_range"),
         CheckConstraint("pages_read >= 0", name="check_pages_read_nonnegative"),
@@ -45,6 +50,7 @@ class Book(db.Model):
     author = db.Column(db.String(100), nullable=False, index=True)
     year = db.Column(db.Integer, nullable=False)
 
+    # Foreign key to associate book with a user
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     user = db.relationship("User", back_populates="books")
 
@@ -57,6 +63,7 @@ class Book(db.Model):
     tags = db.relationship("Tag", secondary=book_tags, back_populates="books")
     shelf_links = db.relationship("ShelfBook", back_populates="book", cascade="all, delete-orphan")
 
+    # Method to convert book object to a dictionary for JSON serialization
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -73,8 +80,10 @@ class Book(db.Model):
             "shelves": [link.shelf.name for link in self.shelf_links],
         }
 
-
+# Model for Tag with a unique constraint to ensure a user cannot have duplicate tag names
 class Tag(db.Model):
+    '''Model for Tag with a unique constraint to ensure a user cannot have duplicate tag names.'''
+    # Unique constraint to ensure a user cannot have duplicate tag names
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uq_tag_user_name"),
     )
@@ -82,11 +91,11 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-
+    # Relationship to associate tags with a user and books
     user = db.relationship("User", back_populates="tags")
     books = db.relationship("Book", secondary=book_tags, back_populates="tags")
 
-
+# Model for Shelf with a unique constraint to ensure a user cannot have duplicate shelf names
 class Shelf(db.Model):
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uq_shelf_user_name"),
@@ -99,8 +108,9 @@ class Shelf(db.Model):
     user = db.relationship("User", back_populates="shelves")
     shelf_books = db.relationship("ShelfBook", back_populates="shelf", cascade="all, delete-orphan")
 
-
+# Association model to link shelves and books with a unique constraint to prevent duplicate entries
 class ShelfBook(db.Model):
+    '''Association model to link shelves and books with a unique constraint to prevent duplicate entries of the same book on the same shelf.'''
     __table_args__ = (
         UniqueConstraint("shelf_id", "book_id", name="uq_shelf_book"),
     )
