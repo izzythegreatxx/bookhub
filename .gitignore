@@ -11,5 +11,10 @@ venv/
 # SQLite database
 *.db
 
-# Secrets 
+# Secrets
 secret_key.txt
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
