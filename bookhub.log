@@ -1,0 +1,77 @@
+2026-04-23 12:33:17,943 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:33:17,965 [WARNING]  * Debugger is active!
+2026-04-23 12:33:17,970 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:36:18,048 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\main.py', reloading
+2026-04-23 12:36:21,111 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:37:07,760 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:37:07,799 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-04-23 12:37:07,801 [INFO] [33mPress CTRL+C to quit[0m
+2026-04-23 12:37:07,801 [INFO]  * Restarting with stat
+2026-04-23 12:37:08,346 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:37:08,380 [WARNING]  * Debugger is active!
+2026-04-23 12:37:08,383 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:37:13,494 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:13] "GET / HTTP/1.1" 200 -
+2026-04-23 12:37:13,605 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:13] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2026-04-23 12:37:13,654 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:13] "[36mGET /static/auth.js HTTP/1.1[0m" 304 -
+2026-04-23 12:37:23,601 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:23] "POST /auth/login HTTP/1.1" 200 -
+2026-04-23 12:37:23,656 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:23] "GET /dashboard HTTP/1.1" 200 -
+2026-04-23 12:37:23,705 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:23] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2026-04-23 12:37:23,716 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:23] "[36mGET /static/dashboard.js HTTP/1.1[0m" 304 -
+2026-04-23 12:37:23,770 [INFO] 127.0.0.1 - - [23/Apr/2026 12:37:23] "GET /books/ HTTP/1.1" 200 -
+2026-04-23 12:47:23,044 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\routes\\routes.py', reloading
+2026-04-23 12:47:25,556 [INFO]  * Restarting with stat
+2026-04-23 12:47:26,159 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:47:26,194 [WARNING]  * Debugger is active!
+2026-04-23 12:47:26,198 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:48:07,187 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\routes\\routes.py', reloading
+2026-04-23 12:48:09,737 [INFO]  * Restarting with stat
+2026-04-23 12:48:10,289 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:48:10,322 [WARNING]  * Debugger is active!
+2026-04-23 12:48:10,328 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:54:55,588 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\routes\\routes.py', reloading
+2026-04-23 12:54:58,156 [INFO]  * Restarting with stat
+2026-04-23 12:54:58,748 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:54:58,780 [WARNING]  * Debugger is active!
+2026-04-23 12:54:58,784 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:56:38,014 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\routes\\routes.py', reloading
+2026-04-23 12:56:40,470 [INFO]  * Restarting with stat
+2026-04-23 12:56:41,053 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:56:41,085 [WARNING]  * Debugger is active!
+2026-04-23 12:56:41,087 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:56:53,413 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\routes\\routes.py', reloading
+2026-04-23 12:56:55,482 [INFO]  * Restarting with stat
+2026-04-23 12:56:56,056 [INFO] BookHub app created and logging initialized.
+2026-04-23 12:56:56,088 [WARNING]  * Debugger is active!
+2026-04-23 12:56:56,089 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 12:58:59,145 [INFO]  * Detected change in 'C:\\Users\\joe-z\\bookhub\\routes\\shelves.py', reloading
+2026-04-23 12:59:01,576 [INFO]  * Restarting with stat
+2026-04-23 13:12:07,628 [INFO] BookHub app created and logging initialized.
+2026-04-23 13:12:07,677 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-04-23 13:12:07,677 [INFO] [33mPress CTRL+C to quit[0m
+2026-04-23 13:12:07,678 [INFO]  * Restarting with stat
+2026-04-23 13:12:08,158 [INFO] BookHub app created and logging initialized.
+2026-04-23 13:12:08,190 [WARNING]  * Debugger is active!
+2026-04-23 13:12:08,194 [INFO]  * Debugger PIN: 755-271-615
+2026-04-23 13:12:11,596 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:11] "GET / HTTP/1.1" 200 -
+2026-04-23 13:12:11,701 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:11] "[36mGET /static/auth.js HTTP/1.1[0m" 304 -
+2026-04-23 13:12:11,710 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:11] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2026-04-23 13:12:23,894 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:23] "POST /auth/login HTTP/1.1" 200 -
+2026-04-23 13:12:23,918 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:23] "GET /dashboard HTTP/1.1" 200 -
+2026-04-23 13:12:23,952 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:23] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2026-04-23 13:12:23,952 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:23] "[36mGET /static/dashboard.js HTTP/1.1[0m" 304 -
+2026-04-23 13:12:24,006 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:24] "GET /books/ HTTP/1.1" 200 -
+2026-04-23 13:12:48,143 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:48] "GET /shelves/ HTTP/1.1" 200 -
+2026-04-23 13:12:48,985 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:48] "GET /shelves/ HTTP/1.1" 200 -
+2026-04-23 13:12:48,995 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:48] "GET /books/ HTTP/1.1" 200 -
+2026-04-23 13:12:50,148 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:50] "GET /shelves/ HTTP/1.1" 200 -
+2026-04-23 13:12:53,665 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:53] "[32mPOST /shelves HTTP/1.1[0m" 308 -
+2026-04-23 13:12:53,684 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:53] "[35m[1mPOST /shelves/ HTTP/1.1[0m" 201 -
+2026-04-23 13:12:53,687 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:53] "[32mGET /shelves HTTP/1.1[0m" 308 -
+2026-04-23 13:12:53,694 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:53] "GET /shelves/ HTTP/1.1" 200 -
+2026-04-23 13:12:53,713 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:53] "GET /books/ HTTP/1.1" 200 -
+2026-04-23 13:12:55,514 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:55] "GET /shelves/ HTTP/1.1" 200 -
+2026-04-23 13:12:56,337 [INFO] 127.0.0.1 - - [23/Apr/2026 13:12:56] "GET /shelves/1 HTTP/1.1" 200 -
+2026-04-23 13:13:00,499 [INFO] 127.0.0.1 - - [23/Apr/2026 13:13:00] "GET /shelves/ HTTP/1.1" 200 -
+2026-04-23 13:13:04,014 [INFO] 127.0.0.1 - - [23/Apr/2026 13:13:04] "DELETE /shelves/1 HTTP/1.1" 200 -

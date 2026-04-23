@@ -8,8 +8,11 @@ import os
 
 from dotenv import load_dotenv
 
-from flask import Flask, render_template, session
+from flask import Flask, render_template, flash, session, request
+from flask_mail import Message
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
+
+import logging
 
 from blocklist import BLOCKLIST
 from mail_config import mail
@@ -40,21 +43,37 @@ def create_app() -> Flask:
     app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", app.config["MAIL_USERNAME"])
+    
+    # Logging configuration
+    logging.basicConfig(
+        level=logging.INFO, 
+        format='%(asctime)s [%(levelname)s] %(message)s',
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler("bookhub.log")
+        ]
+    )
 
-# Initialize extensions
-    db.init_app(app)
+    logging.info("BookHub app created and logging initialized.")
+    
+    # Register blueprints for authentication, book management, and shelf management    # Register blueprints for authentication, book management, and shelf management
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(books_bp, url_prefix="/books")
+    app.register_blueprint(shelves_bp, url_prefix="/shelves")
+    
+    
+
+    #initialize JWT manager and database
     jwt = JWTManager(app)
+    db.init_app(app)
     mail.init_app(app)
+    
     
     # Check if a JWT token is revoked (i.e., in the blocklist)
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
         return jwt_payload["jti"] in BLOCKLIST
      
-    # Register blueprints for authentication, book management, and shelf management
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(books_bp, url_prefix="/books")
-    app.register_blueprint(shelves_bp, url_prefix="/shelves")
     
     # Define routes for the home page (authentication) and dashboard
     @app.get("/")
@@ -66,6 +85,32 @@ def create_app() -> Flask:
         username = session.get('username', "Guest")
             
         return render_template("dashboard.html", username=username  )
+    
+    @app.route("/contact", methods=["GET", "POST"])
+    def contact():
+        message_text = None
+        if request.method == "POST":
+            name = request.form.get("name")
+            email = request.form.get("email")
+            message_content = request.form.get("message")
+            
+            if not name or not email or not message_content:
+                message_text = "ALl fields are required."
+            else:
+                msg = Message(
+                    subject=f"BookHub Contact from {name}", 
+                    sender=email, 
+                    recipients=["izzytechdev@gmail.com"],
+                    body=f"Name: {name}\nEmail: {email}\n\nMessage:\n{message_content}"
+                )
+                try:
+                    mail.send(msg)
+                    message_text = "Your message has been sent successfully! Thank you for reaching out."
+                except Exception:
+                    message_text = "An error occurred while sending your message. Please try again later."
+        return render_template("contact.html", message_text=message_text)   
+        
+
 
     # Create database tables if they don't exist
     with app.app_context():

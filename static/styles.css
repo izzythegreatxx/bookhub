@@ -317,6 +317,11 @@ textarea {
     gap: 16px;
 }
 
+.topbar a.btn-primary {
+    float: right;
+    margin-top: -40px; /* adjust vertical alignment */
+}
+
 .stat-card strong {
     display: block;
     margin-top: 10px;
@@ -507,4 +512,21 @@ textarea {
     .topbar-actions {
         flex-direction: column;
     }
+}
+
+#contact-form {
+    max-width: 600px;   /* limit the form width */
+    margin: 0 auto;     /* center horizontally */
+    padding: 20px;      /* space inside the form */
+    box-sizing: border-box;
+}
+
+.footer {
+    text-align: center;
+    padding: 10px 0;
+    margin-top: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    background-color: var(--card-bg);
+    border-top: 1px solid #ddd;
 }
