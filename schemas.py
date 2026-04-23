@@ -21,7 +21,7 @@ class BookSchema(Schema):
     rating = fields.Int(validate=validate.Range(min=1, max=5))
     # Review is an optional string field for user reviews of the book
     review = fields.Str()
-    pages_total = fields.Int(validate=validate.Range(min=1))
+    pages_total = fields.Integer(required=False, allow_none=True)
     pages_read = fields.Int(validate=validate.Range(min=0))
     # Custom validation to ensure pages_read does not exceed pages_total when both fields are provided
     @validates_schema

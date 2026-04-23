@@ -99,15 +99,85 @@ async function fetchShelves() {
     renderShelves(shelves);
 }
 
+async function editBook(bookId) {
+    // Fetch current book data
+    const response = await fetch(`/books/${bookId}`, { headers: getAuthHeaders() });
+    if (!response.ok) {
+        alert("Failed to fetch book info");
+        return;
+    }
+    const book = await response.json();
+
+    // Human-readable status map
+    const statusMap = {
+        "Want to Read": "want_to_read",
+        "Currently Reading": "currently_reading",
+        "Read": "read"
+    };
+
+    // Prompt user for new values, prefilled with current values
+    const title = prompt("Edit title:", book.title)?.trim() || book.title;
+    const author = prompt("Edit author:", book.author)?.trim() || book.author;
+    
+    const yearInput = prompt("Edit year:", book.year);
+    const year = yearInput !== null && yearInput !== "" ? parseInt(yearInput, 10) : book.year;
+
+    const humanStatusInput = prompt(
+        "Edit status (Want to Read, Currently Reading, Read):",
+        book.status.replace(/_/g, " ")
+    );
+    const humanStatus = humanStatusInput !== null && humanStatusInput !== "" ? humanStatusInput : book.status.replace(/_/g, " ");
+    const status = statusMap[humanStatus] || book.status;
+
+    const pagesTotalInput = prompt("Edit total pages:", book.pages_total || 0);
+    const pages_total = pagesTotalInput !== null && pagesTotalInput !== "" ? parseInt(pagesTotalInput, 10) : book.pages_total;
+
+    const pagesReadInput = prompt("Edit pages read:", book.pages_read || 0);
+    const pages_read = pagesReadInput !== null && pagesReadInput !== "" ? parseInt(pagesReadInput, 10) : book.pages_read;
+
+    const ratingInput = prompt("Edit rating (1-5):", book.rating || 0);
+    const rating = ratingInput !== null && ratingInput !== "" ? parseInt(ratingInput, 10) : book.rating;
+
+    const reviewInput = prompt("Edit review:", book.review || "");
+    const review = reviewInput !== null && reviewInput !== "" ? reviewInput.trim() : book.review;
+
+    // Build payload only with valid values
+    const payload = {};
+    if (title) payload.title = title;
+    if (author) payload.author = author;
+    if (!isNaN(year)) payload.year = year;
+    if (["want_to_read","currently_reading","read"].includes(status)) payload.status = status;
+    if (!isNaN(pages_total) && pages_total >= 0) payload.pages_total = pages_total;
+    if (!isNaN(pages_read) && pages_read >= 0) payload.pages_read = pages_read;
+    if (!isNaN(rating) && rating >= 1 && rating <= 5) payload.rating = rating;
+    if (review) payload.review = review;
+
+    // PATCH request to backend
+    const updateResponse = await fetch(`/books/${bookId}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+    });
+
+    const data = await updateResponse.json().catch(() => ({}));
+    if (!updateResponse.ok) {
+        console.log(data); // Shows exact backend validation errors
+        alert(data.message || JSON.stringify(data) || "Failed to update book");
+        return;
+    }
+
+    fetchBooks(); // Refresh the list after successful edit
+}
 function renderStats(books) {
-    document.getElementById("stat-total").textContent = books.length;
-    document.getElementById("stat-reading").textContent = books.filter(
+    const bookArray = Array.isArray(books) ? books : [];
+    document.getElementById("stat-total").textContent = bookArray.length;
+    document.getElementById("stat-reading").textContent = bookArray.filter(
         (book) => book.status === "currently_reading"
     ).length;
-    document.getElementById("stat-read").textContent = books.filter(
+    document.getElementById("stat-read").textContent = bookArray.filter(
         (book) => book.status === "read"
     ).length;
-    document.getElementById("stat-want").textContent = books.filter(
+    document.getElementById("stat-want").textContent = bookArray.filter(
         (book) => book.status === "want_to_read"
     ).length;
 }
@@ -128,8 +198,11 @@ function buildShelfOptions() {
     `;
 }
 
-function renderBooks(books) {
-    booksList.innerHTML = "";
+function renderBooks(books, inShelf = false, container = null) {
+    const booksList = container || document.getElementById("books-list");
+    
+    const oldCards = booksList.querySelectorAll(".book-card");
+    oldCards.forEach(card => card.remove());
 
     if (!books.length) {
         booksList.innerHTML = '<div class="empty-state">No books found.</div>';
@@ -159,62 +232,46 @@ function renderBooks(books) {
                 <span>${book.pages_read ?? 0}/${book.pages_total ?? 0} pages</span>
             </div>
             <p class="review-text">${escapeHtml(book.review || "No review yet.")}</p>
-            <div class="book-actions shelf-actions">
+        `;
+
+        // Only add shelf select and buttons if not viewing inside a shelf
+        if (!inShelf) {
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "book-actions shelf-actions";
+
+            actionsDiv.innerHTML = `
                 <select class="shelf-select" data-book-id="${book.id}">
                     ${buildShelfOptions()}
                 </select>
-                <button class="btn-secondary btn-small add-to-shelf-btn" data-book-id="${book.id}">
-                    Add
-                </button>
-                <button class="btn-secondary btn-small delete-book-btn" data-id="${book.id}">
-                    Delete
-                </button>
-            </div>
-        `;
+                <button class="btn-secondary btn-small add-to-shelf-btn" data-book-id="${book.id}">Add</button>
+                <button class="btn-secondary btn-small edit-book-btn" data-book-id="${book.id}">Edit</button>
+                <button class="btn-secondary btn-small delete-book-btn" data-id="${book.id}">Delete</button>
+            `;
 
-        const shelfSelect = card.querySelector(".shelf-select");
-        const addToShelfButton = card.querySelector(".add-to-shelf-btn");
-        const deleteButton = card.querySelector(".delete-book-btn");
+            const shelfSelect = actionsDiv.querySelector(".shelf-select");
+            const addToShelfButton = actionsDiv.querySelector(".add-to-shelf-btn");
+            const editButton = actionsDiv.querySelector(".edit-book-btn");
+            const deleteButton = actionsDiv.querySelector(".delete-book-btn");
 
-        addToShelfButton.addEventListener("click", async () => {
-            const shelfId = shelfSelect.value;
+            addToShelfButton.addEventListener("click", async () => {
+                const shelfId = shelfSelect.value;
+                if (!shelfId) {
+                    alert("Please select a shelf.");
+                    return;
+                }
+                await addBookToShelf(shelfId, book.id);
+            });
 
-            if (!shelfId) {
-                alert("Please select a shelf.");
-                return;
-            }
+            editButton.addEventListener("click", () => editBook(book.id));
+            deleteButton.addEventListener("click", () => deleteBook(book.id));
 
-            await addBookToShelf(shelfId, book.id);
-        });
-
-        deleteButton.addEventListener("click", () => deleteBook(book.id));
+            card.appendChild(actionsDiv);
+        }
 
         booksList.appendChild(card);
     }
 }
 
-function renderShelves(shelves) {
-    shelvesList.innerHTML = "";
-
-    if (!shelves.length) {
-        shelvesList.innerHTML = '<li class="empty-line">No shelves created yet.</li>';
-        return;
-    }
-
-    for (const shelf of shelves) {
-        const item = document.createElement("li");
-        item.className = "simple-list-item";
-
-        const button = document.createElement("button");
-        button.className = "shelf-button";
-        button.dataset.id = shelf.id;
-        button.textContent = shelf.name;
-        button.addEventListener("click", () => fetchShelfBooks(shelf.id));
-
-        item.appendChild(button);
-        shelvesList.appendChild(item);
-    }
-}
 
 function formatStatus(status) {
     if (status === "want_to_read") return "Want to Read";
@@ -359,6 +416,158 @@ if (showAllBooksButton) {
     showAllBooksButton.addEventListener("click", fetchBooks);
 }
 
+const sidebar = document.querySelector('.sidebar-nav');
+const offset = 160; // initial offset from top
+
+window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    sidebar.style.transform = `translateY(${offset + scrollTop}px)`;
+});
+
+const dashboardButton = document.getElementById("dashboard-btn");
+
+dashboardButton.addEventListener("click", async () => {
+    try {
+        // Reset the main page header
+        const pageHeader = document.querySelector("main .topbar h1");
+        if (pageHeader) {
+            pageHeader.textContent = "BookHub Dashboard";
+        }
+
+        // Container for description
+        const main = document.getElementById("books-list");
+        main.innerHTML = "";
+
+        // Description section at the top of the dashboard
+        const description = document.createElement("p");
+        description.className = "dashboard-description";
+        description.textContent = "Welcome to BookHub! Keep track of your books, manage your reading shelves, and review your favorites.";
+
+        // Separate div for books so renderBooks doesn't overwrite description
+        const booksContainer = document.createElement("div");
+        booksContainer.id = "books-container";
+
+        main.appendChild(description);
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to load dashboard");
+    }
+});
+
+
+
+const booksButton = document.getElementById("books-btn");
+
+booksButton.addEventListener("click", async () => {
+    try {
+        const response = await fetch("/books", { headers: getAuthHeaders() });
+        if (!response.ok) {
+            alert("Failed to fetch books");
+            return;
+        }
+
+        setPageDescription("Here are your books! You can edit details, add them to shelves, or review your reading progress.");
+
+        const books = await response.json();
+
+        // Reset the main page header to default
+        const pageHeader = document.querySelector("main .topbar h1");
+        if (pageHeader) {
+            pageHeader.textContent = "Your Books";
+        }
+
+        // Render all books in the main container
+        renderBooks(books, false, document.getElementById("books-list")); 
+    } catch (err) {
+        console.error(err);
+        alert("Failed to fetch books");
+    }
+});
+
+// Sidebar Shelves button
+const shelvesButton = document.querySelector("#shelves-btn"); // adjust selector if needed
+
+shelvesButton.addEventListener("click", async () => {
+    // Reset the main page header to Shelves view
+    const pageHeader = document.querySelector("main .topbar h1");
+    if (pageHeader) {
+        pageHeader.textContent = "Your Shelves";
+    }
+
+    // Set a description for the Shelves page
+    setPageDescription("Here are your book shelves! Click a shelf to view the books inside.");
+
+    try {
+        // Fetch all shelves
+        const response = await fetch("/shelves", { headers: getAuthHeaders() });
+        if (!response.ok) {
+            alert("Failed to fetch shelves");
+            return;
+        }
+        const shelves = await response.json();
+
+        // Render shelves
+        renderShelves(shelves);
+    } catch (err) {
+        console.error(err);
+        alert("An error occurred while fetching shelves.");
+    }
+});
+
+// Function to render shelves list in main panel
+function renderShelves(shelves) {
+    const main = document.getElementById("books-list");
+
+    if (!shelves.length) {
+        main.innerHTML = '<div class="empty-state">No shelves found.</div>';
+        return;
+    }
+
+    shelves.forEach(shelf => {
+        const div = document.createElement("div");
+        div.className = "shelf-card";
+        div.textContent = shelf.name;
+        div.style.cursor = "pointer";
+        div.style.padding = "10px";
+        div.style.border = "1px solid #ddd";
+        div.style.borderRadius = "8px";
+        div.style.marginBottom = "8px";
+        div.style.backgroundColor = "#fff";
+        div.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+
+        // Click to load books in this shelf
+        div.addEventListener("click", async () => {
+            try {
+                const res = await fetch(`/shelves/${shelf.id}`, { headers: getAuthHeaders() });
+                if (!res.ok) {
+                    alert("Failed to fetch books for this shelf");
+                    return;
+                }
+                const books = await res.json();
+
+                // Update the main page header to the shelf name
+                const pageHeader = document.querySelector("main .topbar h1");
+                if (pageHeader) {
+                    pageHeader.textContent = shelf.name;
+                }
+
+                // Clear previous books below header
+                const booksList = document.getElementById("books-list");
+                booksList.innerHTML = "";
+
+                // Render books below the header
+                renderBooks(books, true); // 'true' hides Add to Shelf dropdown
+            } catch (err) {
+                console.error(err);
+                alert("Error fetching books for shelf");
+            }
+        });
+
+        main.appendChild(div);
+    });
+}
+
 document.getElementById("logout-btn").addEventListener("click", async () => {
     await fetch("/auth/logout", {
         method: "POST",
@@ -372,9 +581,35 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
     window.location.href = "/";
 });
 
+function setPageDescription(text) {
+    const main = document.getElementById("books-list");
+
+    // Clear previous content
+    main.innerHTML = "";
+
+    // Create and append description
+    const description = document.createElement("p");
+    description.className = "page-description"; 
+    description.textContent = text;
+    main.appendChild(description);
+}
+
 async function initializeDashboard() {
-    await fetchShelves();
-    await fetchBooks();
+    // Set the main header
+    const pageHeader = document.querySelector("main .topbar h1");
+    if (pageHeader) {
+        pageHeader.textContent = "BookHub Dashboard";
+    }
+
+    // Main content container
+    const main = document.getElementById("books-list");
+    main.innerHTML = "";
+
+    // Add welcome description
+    const description = document.createElement("p");
+    description.className = "page-description";
+    description.textContent = "Welcome to BookHub! Keep track of your books, manage your reading shelves, and review your favorites.";
+    main.appendChild(description);
 }
 
 initializeDashboard();

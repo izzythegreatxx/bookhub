@@ -4,89 +4,123 @@ Includes helper functions for JSON payload handling and book data validation, as
 All routes require JWT authentication to ensure that users can only access and modify their own book data.
 '''
 
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import db, Book
+from schemas import BookSchema
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import and_
 
-from models import Book, db
-from schemas import BOOK_STATUSES, BookSchema
 
-# Blueprint for book-related routes
+books_bp = Blueprint("books", __name__)
 book_schema = BookSchema()
 books_schema = BookSchema(many=True)
-books_bp = Blueprint("books", __name__)
 
-# Helper functions for JSON payload handling and book data validation
-def get_json_payload():
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return None
-    return data
-
-
-def validate_book_payload(data, partial=False):
-    errors = book_schema.validate(data, partial=partial)
-    if errors:
-        return errors
-
-    status = data.get("status")
-    if status is not None and status not in BOOK_STATUSES:
-        return {"status": [f"Status must be one of: {', '.join(BOOK_STATUSES)}"]}
-
-    return {}
-
-# Route for adding a new book to the user's collection
-@books_bp.post("/books")
-@jwt_required()
-def add_book():
-    data = get_json_payload()
-    if data is None:
-        return jsonify({"message": "Request body must be valid JSON"}), 400
-    
-    # Validate the book data and return errors if validation fails
-    errors = validate_book_payload(data, partial=False)
-    if errors:
-        return jsonify(errors), 400
-    # Get the user ID from the JWT token to associate the new book with the correct user
-    user_id = int(get_jwt_identity())
-
-    # Create a new Book object with the provided data and associate it with the user
-    new_book = Book(
-        title=data["title"].strip(),
-        author=data["author"].strip(),
-        year=data["year"],
-        user_id=user_id,
-        status=data.get("status", "want_to_read"),
-        rating=data.get("rating"),
-        review=data.get("review"),
-        pages_total=data.get("pages_total"),
-        pages_read=data.get("pages_read", 0),
-    )
-    
-    # Add the new book to the database session and commit it to save the book in the database
-    db.session.add(new_book)
-    db.session.commit()
-
-    return jsonify(book_schema.dump(new_book)), 201
-
-# Route for retrieving all books in the user's collection, ordered by most recently added
-@books_bp.get("/books")
+# GET all books for current user
+@books_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_books():
-    user_id = int(get_jwt_identity())
-    books = Book.query.filter_by(user_id=user_id).order_by(Book.id.desc()).all()
+    user_id = get_jwt_identity()
+    books = Book.query.filter_by(user_id=user_id).all()
     return jsonify(books_schema.dump(books)), 200
 
-# Route for retrieving a specific book by its ID, ensuring it belongs to the authenticated user
-@books_bp.get("/books/<int:book_id>")
+# GET single book
+@books_bp.route("/<int:book_id>", methods=["GET"])
 @jwt_required()
 def get_book(book_id):
-    user_id = int(get_jwt_identity())
+    user_id = get_jwt_identity()
     book = Book.query.filter_by(id=book_id, user_id=user_id).first()
+    if not book:
+        return jsonify({"message": "Book not found"}), 404
+    return jsonify(book_schema.dump(book)), 200
 
+# POST create new book
+@books_bp.route("/", methods=["POST"])
+@jwt_required()
+def create_book():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
+    book = Book(user_id=user_id, **data)
+    db.session.add(book)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"message": "Book with this title already exists"}), 409
+
+    return jsonify(book_schema.dump(book)), 200
+
+# Update book details, allowing partial updates and ensuring that the updated title does not conflict with existing books in the user's collection
+@books_bp.route("/<int:book_id>", methods=["PATCH"])
+@jwt_required()
+def update_book(book_id):
+    user_id = get_jwt_identity()
+    book = Book.query.filter_by(id=book_id, user_id=user_id).first()
     if not book:
         return jsonify({"message": "Book not found"}), 404
 
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
+    # Check if another book with the same title exists
+    if "title" in data:
+        existing = Book.query.filter(
+            and_(Book.user_id == user_id, Book.title == data["title"], Book.id != book_id)
+        ).first()
+        if existing:
+            return jsonify({"message": "Book title already exists"}), 409
+
+    # Update fields
+    for field in ["title", "author", "year", "status", "pages_total", "pages_read", "rating", "review"]:
+        if field in data:
+            setattr(book, field, data[field])
+            
+    # Logical validation
+    errors = []
+
+    # Non-negative pages
+    if book.pages_total is not None and book.pages_total < 0:
+        errors.append("Total pages cannot be negative.")
+
+    if book.pages_read is not None and book.pages_read < 0:
+        errors.append("Pages read cannot be negative.")
+
+    # Pages read cannot exceed total
+    if book.pages_total is not None and book.pages_read is not None:
+        if book.pages_read > book.pages_total:
+            errors.append("Pages read cannot exceed total pages.")
+
+    # Rating validation
+    if book.rating is not None and (book.rating < 1 or book.rating > 5):
+        errors.append("Rating must be between 1 and 5.")
+
+    if errors:
+        return jsonify({"message": "Validation failed", "errors": errors}), 400
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": str(e)}), 400
+
     return jsonify(book_schema.dump(book)), 200
+
+# DELETE book
+@books_bp.route("/<int:book_id>", methods=["DELETE"])
+@jwt_required()
+def delete_book(book_id):
+    user_id = get_jwt_identity()
+    book = Book.query.filter_by(id=book_id, user_id=user_id).first()
+    if not book:
+        return jsonify({"message": "Book not found"}), 404
+
+    db.session.delete(book)
+    db.session.commit()
+    return jsonify({"message": "Book deleted"}), 200
 
 # Route for searching books in the user's collection based on various criteria and supporting pagination and sorting
 @books_bp.get("/books/search")
@@ -138,59 +172,4 @@ def search_books():
         }
     ), 200
 
-# Route for updating an existing book's information, ensuring the book belongs to the authenticated user and validating the input data
-@books_bp.patch("/books/<int:book_id>")
-@jwt_required()
-def update_book(book_id):
-    user_id = int(get_jwt_identity())
-    # Retrieve the book to be updated, ensuring it belongs to the authenticated user
-    book = Book.query.filter_by(id=book_id, user_id=user_id).first()
 
-    if not book:
-        return jsonify({"message": "Book not found"}), 404
-
-    data = get_json_payload()
-    if data is None:
-        return jsonify({"message": "Request body must be valid JSON"}), 400
-    
-    # Validate the updated book data and return errors if validation fails (partial=True allows for partial updates)
-    errors = validate_book_payload(data, partial=True)
-    if errors:
-        return jsonify(errors), 400
-
-    if "title" in data:
-        book.title = data["title"].strip()
-    if "author" in data:
-        book.author = data["author"].strip()
-    if "year" in data:
-        book.year = data["year"]
-    if "status" in data:
-        book.status = data["status"]
-    if "rating" in data:
-        book.rating = data["rating"]
-    if "review" in data:
-        book.review = data["review"]
-    if "pages_total" in data:
-        book.pages_total = data["pages_total"]
-    if "pages_read" in data:
-        book.pages_read = data["pages_read"]
-
-    if book.pages_total is not None and book.pages_read > book.pages_total:
-        return jsonify({"pages_read": ["Pages read cannot exceed pages total"]}), 400
-
-    db.session.commit()
-    return jsonify(book_schema.dump(book)), 200
-
-# Route for deleting a book from the user's collection, ensuring the book belongs to the authenticated user before deletion
-@books_bp.delete("/books/<int:book_id>")
-@jwt_required()
-def delete_book(book_id):
-    user_id = int(get_jwt_identity())
-    book = Book.query.filter_by(id=book_id, user_id=user_id).first()
-
-    if not book:
-        return jsonify({"message": "Book not found"}), 404
-
-    db.session.delete(book)
-    db.session.commit()
-    return "", 204

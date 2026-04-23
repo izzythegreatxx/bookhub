@@ -247,9 +247,18 @@ textarea {
 }
 
 .sidebar-nav {
-    display: grid;
-    gap: 10px;
-    margin: 28px 0;
+    position: fixed;   /* keeps it visible while scrolling */
+    top: 190px;         /* initial offset from top */
+    left: 0;
+    width: 200px;      /* make sure it has enough width for buttons */
+    display: flex;
+    flex-direction: column;  /* stack nav buttons vertically */
+    gap: 10px;         /* spacing between buttons */
+    padding: 10px;     /* add padding to avoid buttons sticking to edge */
+    box-sizing: border-box;
+    background-color: #fff; /* or match your theme */
+    z-index: 1000;     /* stay on top of content */
+    transition: top 0.2s ease-out; /* smooth movement */
 }
 
 .nav-link {
@@ -440,6 +449,20 @@ textarea {
 
 .shelf-select {
     min-width: 0;
+}
+
+.shelf-header {
+    margin: 15px 0;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--text);
+}
+
+.page-description {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.4;
 }
 
 @media (max-width: 1080px) {

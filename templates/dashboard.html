@@ -16,10 +16,9 @@
             </div>
 
             <nav class="sidebar-nav">
-                <button class="nav-link active">Dashboard</button>
-                <button class="nav-link">Books</button>
-                <button class="nav-link">Shelves</button>
-                <button class="nav-link">Reviews</button>
+                <button class="nav-link active" id="dashboard-btn">Dashboard</button>
+                <button class="nav-link" id="books-btn">Books</button>
+                <button class="nav-link" id="shelves-btn">Shelves</button>
             </nav>
 
             <button id="logout-btn" class="btn-secondary full-width">Logout</button>
@@ -36,6 +35,10 @@
                     <button class="btn-primary">Search</button>
                 </div>
             </header>
+
+            <div id="books-list">
+                <!-- Book cards will be dynamically inserted here -->
+            </div>
 
             <section class="stats-grid">
                 <article class="stat-card card">
@@ -96,11 +99,6 @@
             </section>
             <section class="card panel">
                 <div class="panel-header panel-header-row">
-                    <div>
-                        <h2>Your Books</h2>
-                        <p class="muted">All books currently in your collection.</p>
-                    </div>
-                    <button id="show-all-books" class="btn-secondary">Show All Books</button>
                 </div>
 
                 <div id="books-list" class="book-grid"></div>
@@ -110,6 +108,6 @@
     </div>
 
 
-<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </body>
 </html>

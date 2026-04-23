@@ -53,8 +53,8 @@ def create_app() -> Flask:
      
     # Register blueprints for authentication, book management, and shelf management
     app.register_blueprint(auth_bp)
-    app.register_blueprint(books_bp)
-    app.register_blueprint(shelves_bp)
+    app.register_blueprint(books_bp, url_prefix="/books")
+    app.register_blueprint(shelves_bp, url_prefix="/shelves")
     
     # Define routes for the home page (authentication) and dashboard
     @app.get("/")

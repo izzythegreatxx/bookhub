@@ -10,10 +10,12 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from models import Book, Shelf, ShelfBook, db
-from schemas import ShelfSchema
+from schemas import ShelfSchema, BookSchema
+
 
 # Blueprint for shelf-related routes and schema initialization for validating shelf data
 shelf_schema = ShelfSchema()
+book_schema = BookSchema()
 shelves_bp = Blueprint("shelves", __name__)
 
 # Helper function to parse JSON payload from the request and ensure it is a valid dictionary
@@ -50,19 +52,24 @@ def create_shelf():
     return jsonify({"id": shelf.id, "name": shelf.name}), 201
 
 # Route for retrieving all shelves belonging to the authenticated user, returning a list of shelves sorted by name
-@shelves_bp.get("/shelves")
+@shelves_bp.get("")
 @jwt_required()
 def get_shelves():
     user_id = int(get_jwt_identity())
-    # Query the database for shelves that belong to the authenticated user, ordering them alphabetically by name
-    shelves = Shelf.query.filter_by(user_id=user_id).order_by(Shelf.name.asc()).all()
+    shelves = Shelf.query.filter_by(user_id=user_id).all()
 
     return jsonify(
-        [{"id": shelf.id, "name": shelf.name} for shelf in shelves]
+        [
+            {
+                "id": shelf.id,
+                "name": shelf.name,
+            }
+            for shelf in shelves
+        ]
     ), 200
 
 
-@shelves_bp.get("/shelves/<int:shelf_id>")
+@shelves_bp.get("/<int:shelf_id>")
 @jwt_required()
 def get_shelf_books(shelf_id):
     user_id = int(get_jwt_identity())
