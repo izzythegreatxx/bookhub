@@ -8,8 +8,8 @@ import os
 
 from dotenv import load_dotenv
 
-from flask import Flask, render_template
-from flask_jwt_extended import JWTManager
+from flask import Flask, render_template, session
+from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
 
 from blocklist import BLOCKLIST
 from mail_config import mail
@@ -63,7 +63,9 @@ def create_app() -> Flask:
 
     @app.get("/dashboard")
     def dashboard():
-        return render_template("dashboard.html")
+        username = session.get('username', "Guest")
+            
+        return render_template("dashboard.html", username=username  )
 
     # Create database tables if they don't exist
     with app.app_context():

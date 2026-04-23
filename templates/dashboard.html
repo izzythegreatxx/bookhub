@@ -11,12 +11,12 @@
         <aside class="sidebar card">
             <div>
                 <div class="badge">BookHub</div>
-                <h2 class="sidebar-title">Your Shelf</h2>
+                <h2>Welcome, {{ username }}!</h2>
                 <p class="muted">A focused place to manage your books.</p>
             </div>
 
             <nav class="sidebar-nav">
-                <button class="nav-link active" id="dashboard-btn">Dashboard</button>
+                <button class="nav-link" id="dashboard-btn">Dashboard</button>
                 <button class="nav-link" id="books-btn">Books</button>
                 <button class="nav-link" id="shelves-btn">Shelves</button>
             </nav>
@@ -28,7 +28,7 @@
             <header class="topbar card">
                 <div>
                     <h1>Reading Dashboard</h1>
-                    <p class="muted">Track progress, organize shelves, and review what you read.</p>
+                    
                 </div>
                 <div class="topbar-actions">
                     <input id="search-input" type="text" placeholder="Search books..." />
@@ -62,8 +62,8 @@
             <section class="content-grid">
                 <section class="card panel">
                     <div class="panel-header">
-                        <h2>Add Book</h2>
-                        <p class="muted">Create a new entry for your shelf.</p>
+                        <h2>Add Books!</h2>
+                        <p class="muted">Enter the details of the books you want to add</p>
                     </div>
 
                     <form id="add-book-form" class="form-grid">
@@ -85,8 +85,8 @@
 
                 <section class="card panel">
                     <div class="panel-header">
-                        <h2>Your Shelves</h2>
-                        <p class="muted">Create and manage custom shelves.</p>
+                        <h2>Create a Shelf!</h2>
+                        <p class="muted">Create and manage custom shelves!</p>
                     </div>
 
                     <form id="create-shelf-form" class="inline-form">
@@ -97,13 +97,6 @@
                     <ul id="shelves-list" class="simple-list"></ul>
                 </section>
             </section>
-            <section class="card panel">
-                <div class="panel-header panel-header-row">
-                </div>
-
-                <div id="books-list" class="book-grid"></div>
-            </section>
-
         </main>
     </div>
 

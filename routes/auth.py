@@ -1,7 +1,7 @@
 '''Authentication routes for user registration, email verification, login, logout, and token refreshing using Flask, 
    Flask-JWT-Extended, and Flask-Mail. Includes helper functions for token generation and email normalization.
 '''
-from flask import Blueprint, current_app, jsonify, render_template, request, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, url_for, session
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -51,18 +51,23 @@ def register():
     data = get_json_payload()
     if data is None:
         return jsonify({"message": "Request body must be valid JSON"}), 400
-
+    
+    username = data.get("username", "").strip()
     email = normalize_email(data.get("email", ""))
     password = data.get("password", "")
-
-    if not email or not password:
-        return jsonify({"message": "Email and password are required"}), 400
     
+    if not username or not email or not password:
+        return jsonify({"message": "Username, email, and password are required"}), 400
+    
+    # Check if the username is already taken
+    if User.query.filter_by(username=username).first():
+        return jsonify({"message": "Username already exists"}), 400
+
     # Check if the email is already registered
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Email already exists"}), 400
 
-    user = User(email=email)
+    user = User(username=username, email=email)
     user.set_password(password)
 
     db.session.add(user)
@@ -130,6 +135,9 @@ def login():
     # Generate JWT access and refresh tokens for the authenticated user
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
+    
+    session['user_email'] = user.email
+    session['username'] = user.username
 
     return jsonify(
         {
@@ -138,6 +146,7 @@ def login():
             "user": {
                 "id": user.id,
                 "email": user.email,
+                "username": user.username,
                 "is_verified": user.is_verified,
             },
         }

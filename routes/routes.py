@@ -7,7 +7,7 @@ All routes require JWT authentication to ensure that users can only access and m
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Book
-from schemas import BookSchema
+from schemas import BookSchema, BOOK_STATUSES
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_
 

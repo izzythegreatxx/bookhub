@@ -34,6 +34,7 @@
             event.preventDefault();
 
             const payload = {
+                username: document.getElementById("register-username").value.trim(),
                 email: document.getElementById("register-email").value.trim(),
                 password: document.getElementById("register-password").value
             };

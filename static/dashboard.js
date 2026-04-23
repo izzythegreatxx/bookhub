@@ -161,12 +161,12 @@ async function editBook(bookId) {
 
     const data = await updateResponse.json().catch(() => ({}));
     if (!updateResponse.ok) {
-        console.log(data); // Shows exact backend validation errors
+        console.log(data); 
         alert(data.message || JSON.stringify(data) || "Failed to update book");
         return;
     }
 
-    fetchBooks(); // Refresh the list after successful edit
+    fetchBooks(); 
 }
 function renderStats(books) {
     const bookArray = Array.isArray(books) ? books : [];
@@ -583,6 +583,18 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
     window.location.href = "/";
 });
 
+const navLinks = document.querySelectorAll(".nav-link");
+
+navLinks.forEach(button => {
+    button.addEventListener("click", () => {
+        // Remove active class from all buttons
+        navLinks.forEach(btn => btn.classList.remove("active"));
+
+        // Add active class to the clicked button
+        button.classList.add("active");
+    });
+});
+
 function setPageDescription(text) {
     const main = document.getElementById("books-list");
 
@@ -610,8 +622,10 @@ async function initializeDashboard() {
     // Add welcome description
     const description = document.createElement("p");
     description.className = "page-description";
-    description.textContent = "Welcome to BookHub! Keep track of your books, manage your reading shelves, and review your favorites.";
+    description.textContent = "Keep track of your books, manage your reading shelves, and review your favorites.";
     main.appendChild(description);
+
+    fetchBooks();
 }
 
 initializeDashboard();

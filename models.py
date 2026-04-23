@@ -18,6 +18,7 @@ book_tags = db.Table(
 class User(db.Model):
     '''Model for User with fields for email, password hash, and verification status, along with relationships to books, shelves, and tags. Includes methods for setting and checking passwords.'''
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique =True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
