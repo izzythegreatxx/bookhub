@@ -461,6 +461,9 @@ const booksButton = document.getElementById("books-btn");
 
 booksButton.addEventListener("click", async () => {
     try {
+        // Load shelves BEFORE rendering books
+        await fetchShelves();
+
         const response = await fetch("/books", { headers: getAuthHeaders() });
         if (!response.ok) {
             alert("Failed to fetch books");
@@ -471,19 +474,18 @@ booksButton.addEventListener("click", async () => {
 
         const books = await response.json();
 
-        // Reset the main page header to default
         const pageHeader = document.querySelector("main .topbar h1");
         if (pageHeader) {
             pageHeader.textContent = "Your Books";
         }
 
-        // Render all books in the main container
-        renderBooks(books, false, document.getElementById("books-list")); 
+        renderBooks(books, false, document.getElementById("books-list"));
     } catch (err) {
         console.error(err);
         alert("Failed to fetch books");
     }
 });
+
 
 // Sidebar Shelves button
 const shelvesButton = document.querySelector("#shelves-btn"); // adjust selector if needed

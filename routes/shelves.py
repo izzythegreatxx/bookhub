@@ -26,7 +26,7 @@ def get_json_payload():
     return data
 
 # Route for creating a new shelf for the authenticated user, ensuring the shelf name is unique for that user and validating the input data
-@shelves_bp.post("/shelves")
+@shelves_bp.post("/")
 @jwt_required()
 def create_shelf():
     user_id = int(get_jwt_identity())
@@ -52,7 +52,7 @@ def create_shelf():
     return jsonify({"id": shelf.id, "name": shelf.name}), 201
 
 # Route for retrieving all shelves belonging to the authenticated user, returning a list of shelves sorted by name
-@shelves_bp.get("")
+@shelves_bp.get("/")
 @jwt_required()
 def get_shelves():
     user_id = int(get_jwt_identity())
@@ -99,7 +99,7 @@ def get_shelf_books(shelf_id):
     ), 200
 
 # Route for adding a book to a shelf, ensuring both the shelf and book belong to the authenticated user and preventing duplicate entries on the same shelf
-@shelves_bp.post("/shelves/<int:shelf_id>/books/<int:book_id>")
+@shelves_bp.post("/<int:shelf_id>/books/<int:book_id>")
 @jwt_required()
 def add_book_to_shelf(shelf_id, book_id):
     user_id = int(get_jwt_identity())
@@ -123,7 +123,7 @@ def add_book_to_shelf(shelf_id, book_id):
     return jsonify({"message": "Book added to shelf"}), 201
 
 # Route for removing a book from a shelf, ensuring the shelf and book belong to the authenticated user and that the book is currently on the shelf before attempting to remove it
-@shelves_bp.delete("/shelves/<int:shelf_id>/books/<int:book_id>")
+@shelves_bp.delete("/<int:shelf_id>/books/<int:book_id>")
 @jwt_required()
 def remove_book_from_shelf(shelf_id, book_id):
     user_id = int(get_jwt_identity())
