@@ -55,14 +55,17 @@
 
             <form id="register-form" class="form hidden">
                 <h2>Create account</h2>
-                <p class="muted">Start building your reading shelf.</p>
 
+                
                 <label for="register-username">Username</label>
+                <p class="username-note muted">Usernames must be between 3 and 20 characters.</p>
                 <input id="register-username" name="username" type="text" placeholder="Choose a username" required />
+                
                 <label for="register-email">Email</label>
                 <input id="register-email" name="email" type="email" placeholder="you@example.com" required />
 
                 <label for="register-password">Password</label>
+                <p class="password-note muted">Passwords must be at least 8 characters long.</p>
                 <input id="register-password" name="password" type="password" placeholder="Create a password" required />
 
                 <button type="submit" class="btn-primary">Register</button>

@@ -55,10 +55,16 @@ def register():
     username = data.get("username", "").strip()
     email = normalize_email(data.get("email", ""))
     password = data.get("password", "")
+
+    if not username or len(username) < 3 or len(username) > 20:
+        return jsonify({"message": "username must be between 3 and 20 characters"}), 400
     
-    if not username or not email or not password:
-        return jsonify({"message": "Username, email, and password are required"}), 400
-    
+    if not password or len(password) < 8 or len(password) > 64:
+        return jsonify({"message": "password must be at least 8 characters long."}), 400
+
+    import re
+    if not re.match(r"^[A-Za-z0-9_]+$", username):
+        return jsonify({"message": "username can only contain letters, numbers, and underscores"}), 400
     # Check if the username is already taken
     if User.query.filter_by(username=username).first():
         return jsonify({"message": "Username already exists"}), 400

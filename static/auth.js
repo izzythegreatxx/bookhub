@@ -33,11 +33,27 @@
         document.getElementById("register-form").addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const payload = {
-                username: document.getElementById("register-username").value.trim(),
-                email: document.getElementById("register-email").value.trim(),
-                password: document.getElementById("register-password").value
-            };
+            const username = document.getElementById("register-username").value.trim();
+            const usernamePattern = /^[A-Za-z0-9_]+$/;
+            const email = document.getElementById("register-email").value.trim();
+            const password = document.getElementById("register-password").value;
+
+            if(!usernamePattern.test(username)) {
+                alert("username can only contain letters, numbers, and underscores.");
+                return;
+            }
+
+            if (username.length < 3 || username.length > 20) {
+                alert("username must be between 3 and 20 characters long.");
+                return;
+            }
+            
+            if (password.length < 8 || password.length > 64) {
+                alert("password must be at least 8 characters long.");
+                return;
+            }
+
+           const payload = {username, email, password};
 
             try {
                 const response = await fetch("/auth/register", {
@@ -84,6 +100,7 @@
 
                 localStorage.setItem("access_token", data.access_token);
                 localStorage.setItem("refresh_token", data.refresh_token);
+                localStorage.setItem("username", data.username);
                 window.location.href = "/dashboard";
             } catch {
                 showMessage("Something went wrong while logging in.", true);

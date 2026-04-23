@@ -87,6 +87,21 @@ body {
     color: var(--muted);
 }
 
+.form-hidden .muted {
+    margin-top: -12px;
+}
+
+#register-form label{
+    margin-bottom: 4px;
+}
+
+#register-form p.username-note, 
+#register-form p.password-note {
+    margin-top: 2px;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
 .hero-points {
     display: grid;
     gap: 14px;

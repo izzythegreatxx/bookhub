@@ -529,7 +529,7 @@ function renderShelves(shelves) {
     shelves.forEach(shelf => {
         const div = document.createElement("div");
         div.className = "shelf-card";
-        div.textContent = shelf.name;
+        div.style.position ="relative";
         div.style.cursor = "pointer";
         div.style.padding = "10px";
         div.style.border = "1px solid #ddd";
@@ -537,6 +537,93 @@ function renderShelves(shelves) {
         div.style.marginBottom = "8px";
         div.style.backgroundColor = "#fff";
         div.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+
+        // Shelf name
+        const shelfName = document.createElement("span");
+        shelfName.textContent = shelf.name;
+        div.appendChild(shelfName);
+
+        // Settings button
+        const settingsBtn = document.createElement("button");
+        settingsBtn.textContent = "⚙️";
+        settingsBtn.className = "shelf-settings-btn";
+        settingsBtn.style.position = "absolute";
+        settingsBtn.style.right = "10px";
+        settingsBtn.style.top = "10px";
+        div.appendChild(settingsBtn);
+        
+        //Dropdown menu
+        const dropdown = document.createElement("div");
+        dropdown.className = "shelf-dropdown";
+        dropdown.style.display = "none";
+        dropdown.style.position = "absolute";
+        dropdown.style.right = "10px";
+        dropdown.style.top = "35px";
+        dropdown.style.backgroundColor = "#fff";
+        dropdown.style.border = "1px solid #ccc";
+        dropdown.style.borderRadius = "4px";
+        dropdown.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
+        dropdown.style.zIndex = "1000";
+        
+        const renameOption = document.createElement("div");
+        renameOption.textContent = "Rename";
+        renameOption.style.padding = "5px 10px";
+        renameOption.style.cursor = "pointer";
+        renameOption.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const newName = prompt("Enter new shelf name:", shelf.name);
+            if (!newName) return;
+            const res = await fetch(`/shelves/${shelf.id}`, {
+                method: "PATCH", 
+                headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+                body: JSON.stringify({ name: newName})
+            });
+            if (res.ok) {
+                shelf.name = newName;
+                shelfName.textContent = newName;
+                alert("Shelf renamed successfully");
+            } else {
+                alert("Failed to rename shelf");
+            }
+            dropdown.style.display = "none";
+        });
+        const deleteOption = document.createElement("div");
+        deleteOption.textContent = "Delete";
+        deleteOption.style.padding = "5px 10px";
+        deleteOption.style.cursor = "pointer";
+        deleteOption.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (!confirm("Are you sure you want to delete this shelf?")) return;
+            const res = await fetch(`/shelves/${shelf.id}`, {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
+            if (res.ok) {
+                div.remove();
+                alert("Shelf deleted");
+            } else {
+                alert("Failed to delete shelf");
+            }
+            dropdown.style.display = "none";
+        });
+
+        dropdown.appendChild(renameOption);
+        dropdown.appendChild(deleteOption);
+        div.appendChild(dropdown);
+
+        // Toggle dropdown on settings button click
+        settingsBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+        });
+
+        //Hide dropdown if click outside
+        document.addEventListener("click", () => {
+            dropdown.style.display = "none";
+        });
+
+        main.appendChild(div);
+
 
         // Click to load books in this shelf
         div.addEventListener("click", async () => {

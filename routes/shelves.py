@@ -143,3 +143,38 @@ def remove_book_from_shelf(shelf_id, book_id):
     db.session.delete(shelf_book)
     db.session.commit()
     return "", 204
+
+# Delete shelf 
+@shelves_bp.delete("/<int:shelf_id>")
+@jwt_required()
+def delet_shelf(shelf_id):
+    user_id = get_jwt_identity()
+    shelf = Shelf.query.filter_by(id=shelf_id, user_id=user_id).first()
+    if not shelf:
+        return jsonify({"error": "Shelf not found"}), 404
+    
+    db.session.delete(shelf)
+    db.session.commit()
+    return jsonify({"message": "Shelf deleted"}), 200
+
+# Edit shelf name
+@shelves_bp.patch("/<int:shelf_id>")
+@jwt_required()
+def edit_shelf(shelf_id):
+    user_id = get_jwt_identity()
+    shelf = Shelf.query.filter_by(id=shelf_id, user_id=user_id).first()
+    if not shelf:
+        return jsonify({"error": "Shelf not found"}), 404
+    
+    data = request.get_json()
+    new_name = data.get("name", "").strip()
+    if not new_name:
+        return jsonify({"error": "Shelf name cannot be empty"}), 400
+    
+    existing = Shelf.query.filter_by(user_id=user_id, name=new_name).first()
+    if existing and existing.id != shelf_id:
+        return jsonify({"error": "Shelf name already exists"}), 409
+    
+    shelf.name = new_name
+    db.session.commit()
+    return jsonify({"message": "Shelf renamed successfully", "shelf": {"id": shelf.id, "name": shelf.name} }), 200
