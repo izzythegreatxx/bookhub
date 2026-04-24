@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, flash, session, request
 from flask_mail import Message
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
+from flask_migrate import Migrate
 
 import logging
 
@@ -67,8 +68,9 @@ def create_app() -> Flask:
     jwt = JWTManager(app)
     db.init_app(app)
     mail.init_app(app)
-    
-    
+    migrate = Migrate(app, db)
+
+
     # Check if a JWT token is revoked (i.e., in the blocklist)
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):

@@ -1,3 +1,13 @@
+# VS code 
+.vscode/
+
+# PyCharm
+.idea/
+
+#OS files
+*.swp
+*.DS_Store
+
 # Python
 __pycache__/
 *.pyc
@@ -8,8 +18,15 @@ venv/
 # Environment variables
 .env
 
-# SQLite database
+# Database files
 *.db
+*.sqlite3
+
+# Migrations folder
+migrations/
+
+# Logs
+bookhub.log
 
 # Secrets
 secret_key.txt
