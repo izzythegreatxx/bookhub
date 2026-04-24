@@ -12,10 +12,12 @@ from flask_jwt_extended import (
 
 import re
 
+from datetime import datetime, timedelta
+
 from flask_mail import Message
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
-from blocklist import BLOCKLIST
+from blocklist import add_to_blocklist
 from mail_config import mail
 from models import User, db
 
@@ -179,7 +181,8 @@ def login():
 def logout():
     jti = get_jwt()["jti"]
     # Add the token's unique identifier (jti) to the blocklist to revoke it
-    BLOCKLIST.add(jti)
+    expires = datetime.utcnow() + timedelta(seconds=current_app.config["JWT_ACCESS_TOKEN_EXPIRES"])
+    add_to_blocklist(jti, expires)
     return jsonify({"message": "User logged out"}), 200
 
 # Route for user logout that revokes the current JWT refresh token
@@ -187,7 +190,8 @@ def logout():
 @jwt_required(refresh=True)
 def logout_refresh():
     jti = get_jwt()["jti"]
-    BLOCKLIST.add(jti)
+    expires = datetime.utcnow() + timedelta(seconds=current_app.config["JWT_REFRESH_TOKEN_EXPIRES"])
+    add_to_blocklist(jti, expires)
     return jsonify({"message": "Refresh token revoked"}), 200
 
 # Route for refreshing the JWT access token using a valid refresh token

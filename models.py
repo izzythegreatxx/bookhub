@@ -1,6 +1,6 @@
 '''Models for the Flask application, including User, Book, Tag, Shelf, and ShelfBook entities with appropriate relationships and constraints.'''
 
-
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint, UniqueConstraint
 import bcrypt
@@ -122,3 +122,15 @@ class ShelfBook(db.Model):
 
     shelf = db.relationship("Shelf", back_populates="shelf_books")
     book = db.relationship("Book", back_populates="shelf_links")
+    
+class RevokedToken(db.Model):
+    
+    __tablename__ = "revoked_tokens"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(120), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    
+    def __repr__(self):
+        return f"<RevokedToken {self.jti}>"

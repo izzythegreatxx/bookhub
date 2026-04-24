@@ -15,7 +15,7 @@ from flask_migrate import Migrate
 
 import logging
 
-from blocklist import BLOCKLIST
+from blocklist import is_token_revoked
 from mail_config import mail
 from models import db
 from routes.auth import auth_bp
@@ -74,7 +74,10 @@ def create_app() -> Flask:
     # Check if a JWT token is revoked (i.e., in the blocklist)
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
-        return jwt_payload["jti"] in BLOCKLIST
+        jti = jwt_payload["jti"]
+        return is_token_revoked(jti)
+    
+    
      
     
     # Define routes for the home page (authentication) and dashboard
